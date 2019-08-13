@@ -4,7 +4,7 @@ export default function pure(item: any) {
     result = item.map(item => pure(item));
   } else if (typeof item === 'object') {
     for (const key of Object.keys(item)) {
-      if (key !== 'rootContext') {
+      if (key !== 'rootContext' && key !== 'parent') {
         result[key] = pure(item[key]);
       }
     }

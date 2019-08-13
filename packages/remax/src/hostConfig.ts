@@ -2,6 +2,15 @@ import * as scheduler from 'scheduler';
 import { REMAX_ROOT_BACKUP, REMAX_METHOD, TYPE_TEXT } from './constants';
 import { generate } from './instanceId';
 
+function getPath(child: any): string {
+  if (Array.isArray(child.parent)) {
+    return `[${child.parent.length - 1}]`;
+  }
+  return (
+    getPath(child.parent) + '[' + child.parent.children.indexOf(child) + ']'
+  );
+}
+
 /**
  * rootContext Page 实例
  */
@@ -102,22 +111,34 @@ export default {
   ) {
     const props = processProps(newProps, targetIns.rootContext, targetIns.id);
     targetIns.props = props;
+    console.log(getPath(targetIns));
     targetIns.rootContext.requestUpdate();
   },
 
   appendInitialChild: (parent: any, child: any) => {
+    console.log('appendInitialChild');
     child.rootContext = parent.rootContext;
+    child.parent = parent;
     parent.children.push(child);
   },
 
   appendChild(parent: any, child: any) {
+    console.log('appendChild');
     child.rootContext = parent.rootContext;
+    child.parent = parent;
     parent.children.push(child);
   },
 
   insertBefore(parent: any, child: any, beforeChild: any) {
+    console.log('insertBefore');
     child.rootContext = parent.rootContext;
+    child.parent = parent;
     parent.children.splice(parent.children.indexOf(beforeChild), 0, child);
+  },
+
+  removeChild(parent: any, child: any) {
+    console.log('removeChild');
+    parent.children.splice(parent.children.indexOf(child), 1);
   },
 
   finalizeInitialChildren: () => {
@@ -127,6 +148,8 @@ export default {
   supportsMutation: true,
 
   appendChildToContainer(_parent: any, child: any) {
+    child.rootContext[REMAX_ROOT_BACKUP] =
+      child.rootContext[REMAX_ROOT_BACKUP] || [];
     let parent: any = null;
     if (_parent._rootContainer) {
       // append to root
@@ -134,19 +157,15 @@ export default {
         type: 'root',
         children: [],
         rootContext: _parent,
+        parent: child.rootContext[REMAX_ROOT_BACKUP],
       };
     }
 
+    child.parent = parent;
     parent.children.push(child);
 
-    child.rootContext[REMAX_ROOT_BACKUP] =
-      child.rootContext[REMAX_ROOT_BACKUP] || [];
     child.rootContext[REMAX_ROOT_BACKUP].push(parent);
     child.rootContext.executeUpdate();
-  },
-
-  removeChild(parentInstance: any, child: any) {
-    parentInstance.children.splice(parentInstance.children.indexOf(child), 1);
   },
 
   removeChildFromContainer(container: any, child: any) {
