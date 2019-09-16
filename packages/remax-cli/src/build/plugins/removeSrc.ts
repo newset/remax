@@ -28,7 +28,7 @@ const PREFIX_SRC_PATTERN = /^src\//;
 const PARENT_DIR_PATTERN = /^\.\.\//;
 
 function isAsset(module: any): module is OutputAsset {
-  return !!module && module.isAsset;
+  return !!module && (module.isAsset || module.type === 'asset');
 }
 
 export function getImportSource(node: Node): Node | false {
@@ -135,7 +135,11 @@ export default function removeSrc(options: Options): Plugin {
           }
 
           delete bundle[file];
-          bundle[rewrite(file)] = module;
+          this.emitFile({
+            type: 'asset' as 'asset',
+            fileName: rewrite(file),
+            source: module.code,
+          });
         }
       });
     },

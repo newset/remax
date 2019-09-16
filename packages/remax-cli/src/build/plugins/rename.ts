@@ -168,7 +168,11 @@ export default function rename(options: RenameExtensionsOptions): Plugin {
         }
 
         delete bundle[key];
-        bundle[rewrite(key, options.map) || key] = file;
+        this.emitFile({
+          fileName: rewrite(key, options.map) || key,
+          source: file.code || file.source,
+          type: 'asset' as 'asset',
+        });
       }
     },
   };
